@@ -1,0 +1,167 @@
+<html>
+<head><title>Display</title></head>
+<body>
+<canvas id="display">Error displaying canvas.</canvas>
+<div id="log"></div>
+
+<script>
+let canvas=document.getElementById("display");
+canvas.width=window.screen.width;
+canvas.height=600;
+canvas.style="background:#000000;width:auto;height:auto;margin:0;padding:0;";
+document.getElementById("log").style="white-space:pre";
+
+let dis=canvas.getContext("2d");
+let rect=canvas.getBoundingClientRect();
+
+var row = 0;
+var text = "";
+var index = 0;
+var fontSize = 16;
+var fontFamily = "consolas";
+dis.font = `${fontSize}px ${fontFamily}`;
+document.body.style="margin:0";
+dis.fillStyle="#FFFFFF";
+
+function tocanvas(position){[(position[0]-canvas.getBoundingClientRect().left)*canvas.width/canvas.getBoundingClientRect().width,(position[1]-canvas.getBoundingClientRect().top)*canvas.clientHeight/canvas.getBoundingClientRect().height];}
+function clear(){
+let color=dis.fillStyle;
+dis.fillStyle=canvas.style.background;
+dis.fillRect(0,0,canvas.width,canvas.height);
+dis.fillStyle=color;
+row = 0;
+text="";
+index=0;
+}
+function write(char){
+for(let i=0;i<char.toString().length;i++){
+if(char.toString()[i]!=`\n`){
+dis.fillText(char.toString()[i]||"",fontSize*0.55*index,fontSize*row);
+text += char.toString()[i];
+index++;
+}
+else {
+if(canvas.height-row*fontSize<fontSize){
+let d = text.split(`\n`);
+clear();
+for(let i=3;i<d.length;i++) text += d[i]+`\n`;
+write(text);
+} else {
+row++;
+text+=`\n`;
+index=0;
+}
+}
+}
+}
+function writeLine(char){
+write(`\n`+char+`\n`);
+}
+
+/* commands */
+var isCommanding = true;
+let cmds = ["help","acceptCommand","clear","full","ff","c","console.color","print","play"];
+function cmd(cmd){
+var i=0;if(cmd==cmds[i])help();
+i++;if(cmd.split("=")[0].trim()==cmds[i]){if(cmd.split("=")[1].trim()=="false")isCommanding=false;else if(cmd.split("=")[1].trim()=="true"){isCommanding=true;clear();}}
+
+if(!isCommanding)return;
+i++;if(cmd==cmds[i])clear();
+i++;if(cmd==cmds[i])displayFullScreen();
+i++;if(cmd==cmds[i])e(20,20,128,128);
+i++;if(cmd==cmds[i])we(20,20,1024,1024);
+i++;if(cmd.split("=")[0].trim()==cmds[i]){if(cmd.split("=")[1].trim()=="red") dis.fillStyle = "#FF0000";else if(cmd.split("=")[1].trim()=="green") dis.fillStyle = "#00FF00";else if(cmd.split("=")[1].trim()=="blue") dis.fillStyle = "#0000FF";else if(cmd.split("=")[1].trim()=="random()") dis.fillStyle = `#${hex(Math.ceil(Math.random()*15))}${hex(Math.ceil(Math.random()*15))}${hex(Math.ceil(Math.random()*15))}`;}
+i++;if(cmd.split("(")[0]==cmds[i]&&cmd.split(")").length>1)for(let i=6;i<cmd.indexOf(")");i++)document.getElementById("log").innerHTML+=cmd[i]=="%"?"<br>":cmd[i];
+i++;if(cmd==cmds[i]) play();
+
+//let ops=["+","-","*","/"];
+//let n=[];
+//let o="";
+//for(let i=0;i<ops.length;i++){
+//if(cmd.split(ops[i])[n.length].length<o.length||!(o)) o = cmd.split(ops[i])[n.length];
+//n[n.length]=cmd.split(ops[i]);
+//}
+//let result = 0;
+//if(parseFloat(n[0]))result=parseFloat(n[0]); else return;
+//for(let t=1;t<n.length;t++){
+//if(parseFloat(n[t])){
+//for(let i=0;i<ops.length;i++)if(cmd.split(ops[i])[n.length]!=ops[i]&&i==ops.length-1)return;
+//}else return;
+//}
+//writeLine(result.toString());
+}
+
+function help(){write(`\nHere are all the commands:`);for(let i=0;i<cmds.length;i++)write(`\n`+cmds[i]);}
+function displayFullScreen(){if(document.getElementById('display').requestFullscreen){document.getElementById('display').requestFullscreen();}else if(document.getElementById('display').webkitRequestFullscreen){/*Safari*/document.getElementById('display').webkitRequestFullscreen();}else if(document.getElementById('display').msRequestFullscreen){/*IE11*/document.getElementById('display').msRequestFullscreen();}}
+function hex(x){let hex=["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];for(let i=0;i<16;i++)if(x==i)return hex[i];}
+function e(x,y,w,h){let color=dis.fillStyle;for(let i=0;i<100000;i++){var col=Math.ceil(Math.random()*15);dis.fillStyle=`#${hex(col)}${hex(col)}${hex(col)}`;dis.fillRect(x+Math.ceil(Math.random()*w),y+Math.ceil(Math.random()*h),1,1);}dis.fillStyle=color;}
+function we(x,y,w,h){let color=dis.fillStyle;var clrs=["#F00","#0F0","#00F","#000"];for(let i=y;i<y+h;i++){var clr=0;for(let j=x;j<x+w;j++){dis.fillStyle=clrs[clr];dis.fillRect(x+i,y+j,1,1);clr++;clr%=clrs.length;}}dis.fillStyle=color;}
+
+var isPlay = false;
+var pos = [0,0];
+var size = 10;
+function play(){
+isPlay=true;
+}
+
+function Flop(){
+if(flop){
+write(`\u2588`);
+} else {
+var d=text;
+let e=index;
+clear();
+for(let i=0;i<d.length-1;i++)text+=d[i];
+write(text);
+index=e-1;
+}
+flop = !flop;
+flopInterval = window.setInterval(Flop(),flopWait);
+}
+var flop = false;
+let flopWait = 1000;
+var flopInterval;
+document.addEventListener("keyup", function(event){
+flopInterval = window.setInterval(Flop(),flopWait);
+});
+
+/* Input */
+document.addEventListener("keydown", function(event) {
+clearInterval(flopInterval);
+if(isPlay){
+if(event.keyCode==37)pos[0]-=size;
+if(event.keyCode==38)pos[1]-=size;
+if(event.keyCode==39)pos[0]+=size;
+if(event.keyCode==40)pos[1]+=size;
+clear();
+let color=dis.fillStyle;
+dis.fillStyle="#FFF";
+dis.fillRect(pos[0],pos[1],10,10);
+dis.fillStyle=color;
+}
+if(event.key=="Dead") return;
+
+if(event.key=="Backspace") {
+var d=text;
+let e=index;
+clear();
+for(let i=0;i<d.length-1;i++)text+=d[i];
+write(text);
+index=e-1;
+}
+
+if(event.key=="Enter") {
+cmd(text.split(`\n`)[text.split(`\n`).length - 1].split(`\n`)[0]);
+write(`\n`);
+}
+
+let chars = ["32 35","41 127","160 255","913 929","931 937","945 961","963 969","1040 1103"];
+for(let i=0;i<chars.length;i++)for(let j=parseInt(chars[i].split(" ")[0]);j<=parseInt(chars[i].split(" ")[1]);j++)if(event.keyCode==j)write(event.key);
+});
+
+/* Launch */
+writeLine("Welcome to HyperDOS v.1.02; To display all commands: type 'help'.");
+</script>
+
+</body>
+</html>
